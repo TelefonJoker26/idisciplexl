@@ -99,6 +99,7 @@ h1,h2,h3,.display{ font-family:'Fraunces', Georgia, serif; }
 :root[dir="rtl"] textarea{ direction:rtl; text-align:right; }
 :root[dir="rtl"] .lang-row{ direction:ltr; }
 :root[dir="rtl"] .next-card .done-check{ direction:rtl; }
+:root[dir="rtl"] .cal-add-label, :root[dir="rtl"] .cal-status{ direction:rtl; text-align:right; }
 
 header.top{ margin-bottom:28px; }
 .header-row{ display:flex; align-items:flex-start; gap:26px; flex-wrap:wrap; }
@@ -139,9 +140,22 @@ h1{ font-size:clamp(28px,5vw,40px); font-weight:600; margin:0 0 10px; text-wrap:
 .print-btn:disabled{ opacity:.6; cursor:default; }
 .print-status{ margin-top:8px; font-size:12px; color:var(--ink-dim); min-height:14px; }
 .print-status.error{ color:#b0432f; }
+.cal-add{ margin-top:12px; }
+.cal-add-label{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); font-weight:700; margin-bottom:6px; }
+.cal-add-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+.cal-btn{
+  flex:1 1 auto; padding:8px 10px; border:1px solid var(--line); border-radius:9px;
+  background:var(--bg); color:var(--ink); font-family:'Karla',sans-serif; font-weight:700;
+  font-size:12.5px; cursor:pointer;
+}
+.cal-btn:hover{ filter:brightness(1.05); background:var(--surface); }
+.cal-btn:disabled{ opacity:.6; cursor:default; }
+.cal-status{ margin-top:6px; font-size:12px; color:var(--ink-dim); min-height:14px; }
+.cal-status.error{ color:#b0432f; }
 
 @media print{
   .print-btn{ display:none !important; }
+  .cal-add{ display:none !important; }
   body{ background:#fff; padding:0; }
   *{ box-shadow:none !important; color-adjust:exact; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .col, .next-card, .item, tr{ break-inside:avoid; }
@@ -483,6 +497,14 @@ footer.note b{ color:var(--ink); }
         <textarea id="rfNextSteps"></textarea>
         <label for="rfDueDate" id="lblDueDate"></label>
         <input type="date" id="rfDueDate">
+        <div class="cal-add" id="calAdd" hidden>
+          <div class="cal-add-label" id="calAddLabel"></div>
+          <div class="cal-add-btns">
+            <button type="button" class="cal-btn" id="calIcalBtn"></button>
+            <button type="button" class="cal-btn" id="calGoogleBtn"></button>
+          </div>
+          <div class="cal-status" id="calStatus" aria-live="polite"></div>
+        </div>
         <button type="button" class="print-btn" id="printBtn"></button>
         <div class="print-status" id="printStatus" aria-live="polite"></div>
       </div>
@@ -681,6 +703,28 @@ var UI_STRINGS = {
   },
   statusRetry: {en:"Couldn’t create the PDF — try again.", uk:"Не вдалося створити PDF — спробуй ще раз.", de:"PDF konnte nicht erstellt werden — bitte erneut versuchen.",
     es:"No se pudo crear el PDF — inténtalo de nuevo.", it:"Impossibile creare il PDF — riprova.", pl:"Nie udało się utworzyć PDF — spróbuj ponownie.", fa:"ساخت PDF ممکن نشد — دوباره تلاش کنید."},
+  calAddLabel: {en:"Add to calendar", uk:"Додати до календаря", de:"Zum Kalender hinzufügen", es:"Añadir al calendario", it:"Aggiungi al calendario", pl:"Dodaj do kalendarza", fa:"افزودن به تقویم"},
+  calIcalBtn: {en:"Add to iCal", uk:"Додати до iCal", de:"Zu iCal hinzufügen", es:"Añadir a iCal", it:"Aggiungi a iCal", pl:"Dodaj do iCal", fa:"افزودن به iCal"},
+  calGoogleBtn: {en:"Add to Google Calendar", uk:"Додати до Google Календаря", de:"Zu Google Kalender hinzufügen", es:"Añadir a Google Calendar", it:"Aggiungi a Google Calendar", pl:"Dodaj do Kalendarza Google", fa:"افزودن به تقویم Google"},
+  calEventTitle: {en:"iDiscipleXL — Next steps due", uk:"iDiscipleXL — Термін наступних кроків", de:"iDiscipleXL — Nächste Schritte fällig", es:"iDiscipleXL — Próximos pasos vencen", it:"iDiscipleXL — Scadenza prossimi passi", pl:"iDiscipleXL — Termin kolejnych kroków", fa:"iDiscipleXL — موعد قدم‌های بعدی"},
+  calGooglePdfNote: {
+    en:"(The Session Record PDF downloaded separately — attach it to this event yourself.)",
+    uk:"(PDF протоколу зустрічі завантажено окремо — додай його до цієї події самостійно.)",
+    de:"(Das PDF des Sitzungsprotokolls wurde separat heruntergeladen — bitte selbst an dieses Ereignis anhängen.)",
+    es:"(El PDF del Registro de la Sesión se descargó por separado — adjúntalo tú mismo a este evento.)",
+    it:"(Il PDF della Scheda dell’Incontro è stato scaricato separatamente — allegalo tu stesso a questo evento.)",
+    pl:"(PDF protokołu spotkania pobrano osobno — dołącz go samodzielnie do tego wydarzenia.)",
+    fa:"(فایل PDF گزارش جلسه جداگانه دانلود شد — خودتان آن را به این رویداد پیوست کنید.)"
+  },
+  calStatusGoogleSaved: {
+    en:"Event opened in Google Calendar; PDF downloaded for you to attach.",
+    uk:"Подію відкрито в Google Календарі; PDF завантажено, додай його вручну.",
+    de:"Termin in Google Kalender geöffnet; PDF wurde heruntergeladen, bitte selbst anhängen.",
+    es:"Evento abierto en Google Calendar; PDF descargado para que lo adjuntes.",
+    it:"Evento aperto in Google Calendar; PDF scaricato da allegare manualmente.",
+    pl:"Wydarzenie otwarte w Kalendarzu Google; PDF pobrano, dołącz go ręcznie.",
+    fa:"رویداد در تقویم Google باز شد؛ PDF برای پیوست دستی دانلود شد."
+  },
   overviewTitle: {en:"Full Chart Overview", uk:"Повний огляд схеми", de:"Gesamtübersicht", es:"Resumen completo del cuadro", it:"Panoramica completa dello schema", pl:"Pełny przegląd schematu", fa:"نمای کلی کامل نمودار"},
   overviewHint: {
     en:"The whole pathway at a glance — check items directly here, or click a stage name to jump into it below.",
@@ -866,6 +910,12 @@ function applyStaticI18n(){
   document.getElementById("rfNextSteps").placeholder = t("placeholderNextSteps");
   var printBtn = document.getElementById("printBtn");
   if (printBtn && !printBtn.disabled) printBtn.textContent = t("btnDownload");
+  var calAddLabelEl = document.getElementById("calAddLabel");
+  if (calAddLabelEl) calAddLabelEl.textContent = t("calAddLabel");
+  var calIcalBtnEl = document.getElementById("calIcalBtn");
+  if (calIcalBtnEl && !calIcalBtnEl.disabled) calIcalBtnEl.textContent = t("calIcalBtn");
+  var calGoogleBtnEl = document.getElementById("calGoogleBtn");
+  if (calGoogleBtnEl && !calGoogleBtnEl.disabled) calGoogleBtnEl.textContent = t("calGoogleBtn");
   document.getElementById("overviewTitleText").textContent = t("overviewTitle");
   document.getElementById("overviewHintText").textContent = t("overviewHint");
   document.getElementById("nextStepsLabel").textContent = t("nextStepsLabel");
@@ -2142,7 +2192,7 @@ var TOUR_KEY = "idisciplexl-tour-v1";
   });
 })();
 
-// ---- session record card (name/date fields + print) ----
+// ---- session record card (name/date fields + print + add-to-calendar) ----
 var RECORD_KEY = "idisciplexl-record-v1";
 var RECORD_FIELDS = ["rfDisciple","rfDiscipler","rfDate","rfNextSteps","rfDueDate"];
 (function initRecordCard(){
@@ -2152,6 +2202,13 @@ var RECORD_FIELDS = ["rfDisciple","rfDiscipler","rfDate","rfNextSteps","rfDueDat
     if (raw) saved = JSON.parse(raw) || {};
   } catch(e) { saved = {}; }
 
+  function updateCalVisibility(){
+    var dueEl = document.getElementById("rfDueDate");
+    var calAdd = document.getElementById("calAdd");
+    if (!dueEl || !calAdd) return;
+    calAdd.hidden = !dueEl.value;
+  }
+
   RECORD_FIELDS.forEach(function(id){
     var el = document.getElementById(id);
     if (!el) return;
@@ -2159,8 +2216,10 @@ var RECORD_FIELDS = ["rfDisciple","rfDiscipler","rfDate","rfNextSteps","rfDueDat
     el.addEventListener("input", function(){
       saved[id] = el.value;
       try { localStorage.setItem(RECORD_KEY, JSON.stringify(saved)); } catch(e) {}
+      if (id === "rfDueDate") updateCalVisibility();
     });
   });
+  updateCalVisibility();
 
   var printBtn = document.getElementById("printBtn");
   var statusEl = document.getElementById("printStatus");
@@ -2180,15 +2239,12 @@ var RECORD_FIELDS = ["rfDisciple","rfDiscipler","rfDate","rfNextSteps","rfDueDat
     });
   }
 
-  async function generatePdf(){
+  async function renderRecordPdf(){
     if (typeof html2canvas === "undefined" || !window.jspdf){
-      setStatus(t("statusToolsFailed"), true);
-      return;
+      var toolsErr = new Error("pdf-tools-unavailable");
+      toolsErr.code = "tools-failed";
+      throw toolsErr;
     }
-    printBtn.disabled = true;
-    printBtn.textContent = t("btnPreparing");
-    setStatus(t("statusRendering"));
-
     var target = document.querySelector(".wrap");
     var bg = getComputedStyle(document.body).backgroundColor;
     var canvas = await html2canvas(target, {
@@ -2218,11 +2274,11 @@ var RECORD_FIELDS = ["rfDisciple","rfDiscipler","rfDate","rfNextSteps","rfDueDat
     var blob = pdf.output("blob");
     var name = (document.getElementById("rfDisciple") || {}).value || "";
     var filename = "iDisciple" + (name ? "-" + name.replace(/[^a-z0-9]+/gi,"-") : "") + ".pdf";
+    return {blob: blob, filename: filename};
+  }
 
-    setStatus(t("statusWaiting"));
+  async function saveBlobAsDownload(blob, filename){
     var downloads = await (window.claude ? window.claude.use("downloads") : null);
-    printBtn.disabled = false;
-    printBtn.textContent = t("btnDownload");
     if (!downloads){
       // Outside claude.ai (e.g. GitHub Pages): ordinary browser download.
       try {
@@ -2231,22 +2287,183 @@ var RECORD_FIELDS = ["rfDisciple","rfDiscipler","rfDate","rfNextSteps","rfDueDat
         a.href = url; a.download = filename;
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-        setStatus(t("statusSaved"));
+        return true;
       } catch(err){
-        setStatus(t("statusUnavailable"), true);
+        return false;
       }
-      return;
     }
     try {
       await downloads.save({filename: filename, data: blob});
-      setStatus(t("statusSaved"));
+      return true;
     } catch(err){
-      if (err && err.code === "declined"){
-        setStatus("");
-      } else {
-        setStatus(t("statusRetry") + " (" + (err && err.code || "?") + ")", true);
-      }
+      if (err && err.code === "declined") return "declined";
+      throw err;
     }
+  }
+
+  async function generatePdf(){
+    printBtn.disabled = true;
+    printBtn.textContent = t("btnPreparing");
+    setStatus(t("statusRendering"));
+
+    var result;
+    try {
+      result = await renderRecordPdf();
+    } catch(e){
+      setStatus(t("statusToolsFailed"), true);
+      printBtn.disabled = false;
+      printBtn.textContent = t("btnDownload");
+      return;
+    }
+
+    setStatus(t("statusWaiting"));
+    var outcome = await saveBlobAsDownload(result.blob, result.filename);
+    printBtn.disabled = false;
+    printBtn.textContent = t("btnDownload");
+    if (outcome === "declined") setStatus("");
+    else if (outcome) setStatus(t("statusSaved"));
+    else setStatus(t("statusUnavailable"), true);
+  }
+
+  // ---- add to calendar: iCal gets the PDF embedded right in the file; ----
+  // ---- Google Calendar can't accept a file via URL, so it opens a prefilled ----
+  // ---- event while the PDF downloads separately for the user to attach. ----
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function icsDateOnly(dateStr){ return dateStr.replace(/-/g, ""); }
+  function nextDayStr(dateStr){
+    var d = new Date(dateStr + "T00:00:00");
+    d.setDate(d.getDate() + 1);
+    return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+  }
+  function icsEscape(s){
+    return String(s || "").replace(/\\/g,"\\\\").replace(/\n/g,"\\n").replace(/,/g,"\\,").replace(/;/g,"\\;");
+  }
+  function foldIcsLine(line){
+    var out = [];
+    var i = 0, first = true;
+    while (i < line.length){
+      var take = first ? 75 : 74;
+      out.push((first ? "" : " ") + line.slice(i, i + take));
+      i += take;
+      first = false;
+    }
+    return out;
+  }
+  function blobToBase64(blob){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){
+        var result = reader.result || "";
+        var idx = result.indexOf(",");
+        resolve(idx === -1 ? result : result.slice(idx + 1));
+      };
+      reader.onerror = function(){ reject(reader.error || new Error("read-failed")); };
+      reader.readAsDataURL(blob);
+    });
+  }
+  function recordSummaryAndDetails(){
+    var discipleName = (document.getElementById("rfDisciple") || {}).value || "";
+    var nextSteps = (document.getElementById("rfNextSteps") || {}).value || "";
+    var summary = t("calEventTitle") + (discipleName ? " — " + discipleName : "");
+    return {summary: summary, nextSteps: nextSteps};
+  }
+  async function buildIcsText(dateStr, summary, description, pdfBlob, pdfFilename){
+    var uid = "idisciplexl-" + Date.now() + "-" + Math.random().toString(36).slice(2) + "@idisciplexl";
+    var dtStamp = new Date().toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+    var lines = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//iDiscipleXL//Session Record//EN",
+      "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
+      "UID:" + uid, "DTSTAMP:" + dtStamp,
+      "DTSTART;VALUE=DATE:" + icsDateOnly(dateStr),
+      "DTEND;VALUE=DATE:" + icsDateOnly(nextDayStr(dateStr)),
+      "SUMMARY:" + icsEscape(summary)
+    ];
+    if (description) lines.push("DESCRIPTION:" + icsEscape(description));
+    if (pdfBlob){
+      var b64 = await blobToBase64(pdfBlob);
+      var attach = "ATTACH;ENCODING=BASE64;VALUE=BINARY;FMTTYPE=application/pdf;X-FILENAME=" + icsEscape(pdfFilename || "record.pdf") + ":" + b64;
+      lines = lines.concat(foldIcsLine(attach));
+    }
+    lines.push("END:VEVENT", "END:VCALENDAR");
+    return lines.join("\r\n") + "\r\n";
+  }
+  function googleCalUrl(dateStr, summary, description){
+    var params = new URLSearchParams();
+    params.set("action","TEMPLATE");
+    params.set("text", summary || "");
+    params.set("dates", icsDateOnly(dateStr) + "/" + icsDateOnly(nextDayStr(dateStr)));
+    if (description) params.set("details", description);
+    return "https://calendar.google.com/calendar/render?" + params.toString();
+  }
+
+  var calIcalBtn = document.getElementById("calIcalBtn");
+  var calGoogleBtn = document.getElementById("calGoogleBtn");
+  var calStatusEl = document.getElementById("calStatus");
+  function setCalStatus(msg, isError){
+    if (!calStatusEl) return;
+    calStatusEl.textContent = msg || "";
+    calStatusEl.classList.toggle("error", !!isError);
+  }
+  function setCalBusy(busy){
+    if (calIcalBtn) calIcalBtn.disabled = busy;
+    if (calGoogleBtn) calGoogleBtn.disabled = busy;
+  }
+
+  if (calIcalBtn){
+    calIcalBtn.addEventListener("click", function(){
+      handleAddToIcal().catch(function(err){
+        console.error(err);
+        setCalStatus(t("statusRetry"), true);
+        setCalBusy(false);
+      });
+    });
+  }
+  if (calGoogleBtn){
+    calGoogleBtn.addEventListener("click", function(){
+      handleAddToGoogle().catch(function(err){
+        console.error(err);
+        setCalStatus(t("statusRetry"), true);
+        setCalBusy(false);
+      });
+    });
+  }
+
+  async function handleAddToIcal(){
+    var dateStr = (document.getElementById("rfDueDate") || {}).value;
+    if (!dateStr) return;
+    setCalBusy(true);
+    setCalStatus(t("statusRendering"));
+    var result;
+    try { result = await renderRecordPdf(); }
+    catch(e){ setCalStatus(t("statusToolsFailed"), true); setCalBusy(false); return; }
+    var sd = recordSummaryAndDetails();
+    var ics = await buildIcsText(dateStr, sd.summary, sd.nextSteps, result.blob, result.filename);
+    var discipleName = (document.getElementById("rfDisciple") || {}).value || "";
+    var icsFilename = "iDiscipleXL" + (discipleName ? "-" + discipleName.replace(/[^a-z0-9]+/gi,"-") : "") + ".ics";
+    var outcome = await saveBlobAsDownload(new Blob([ics], {type:"text/calendar"}), icsFilename);
+    setCalBusy(false);
+    if (outcome === "declined") setCalStatus("");
+    else if (outcome) setCalStatus(t("statusSaved"));
+    else setCalStatus(t("statusUnavailable"), true);
+  }
+
+  async function handleAddToGoogle(){
+    var dateStr = (document.getElementById("rfDueDate") || {}).value;
+    if (!dateStr) return;
+    var sd = recordSummaryAndDetails();
+    var description = (sd.nextSteps ? sd.nextSteps + "\n\n" : "") + t("calGooglePdfNote");
+    window.open(googleCalUrl(dateStr, sd.summary, description), "_blank", "noopener");
+
+    setCalBusy(true);
+    setCalStatus(t("statusRendering"));
+    var result;
+    try { result = await renderRecordPdf(); }
+    catch(e){ setCalStatus(t("statusToolsFailed"), true); setCalBusy(false); return; }
+    var outcome = await saveBlobAsDownload(result.blob, result.filename);
+    setCalBusy(false);
+    if (outcome === "declined") setCalStatus("");
+    else if (outcome) setCalStatus(t("calStatusGoogleSaved"));
+    else setCalStatus(t("statusUnavailable"), true);
   }
 })();
 
